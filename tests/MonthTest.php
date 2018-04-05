@@ -151,6 +151,23 @@ class MonthTest extends TestCase
         $this->assertArrayStartsAndEnds($month->nextFillerDays(), '2018-06-01', '2018-06-01');
     }
 
+    /** @test */
+    public function can_use_a_custom_formatter()
+    {
+        $month = (new Month(5, 2018));
+
+        $days = $month->setFormatter('Y-d')->days();
+        $this->assertEquals('2018-01', $days[0]);
+
+        $days = $month->setFormatter(function ($day) {
+            return $day->format('d-Y');
+        })->days();
+        $this->assertEquals('01-2018', $days[0]);
+
+        $days = $month->setFormatter(TestFormatter::class)->days();
+        $this->assertInstanceOf(TestFormatter::class, $days[0]);
+    }
+
     public function previousFillerDataProvider()
     {
         return [
@@ -191,5 +208,16 @@ class MonthTest extends TestCase
             }
             echo PHP_EOL;
         }
+    }
+}
+
+class TestFormatter
+{
+
+    public $day;
+
+    public function __construct($day)
+    {
+        $this->day = $day;
     }
 }

@@ -9,6 +9,7 @@ class Month
     protected $month;
 
     protected $weekStart = 0;
+    protected $formatter;
 
     public function __construct($month = null, $year = null)
     {
@@ -42,12 +43,7 @@ class Month
      */
     public function days()
     {
-        $dates = [];
-        for ($dayIndex = 0; $dayIndex < $this->month->daysInMonth; $dayIndex++) {
-            $dates[] = $this->firstDay()->addDay($dayIndex);
-        }
-
-        return $dates;
+        return $this->createDatesBetween($this->firstDay(), $this->lastDay()->addDay());
     }
 
     /**
@@ -122,6 +118,13 @@ class Month
         return $this;
     }
 
+    public function setFormatter($formatter)
+    {
+        $this->formatter = $formatter;
+
+        return $this;
+    }
+
     /**
      * @param Carbon $start
      * @param Carbon $end
@@ -133,9 +136,30 @@ class Month
         $count = $start->diffInDays($end);
 
         for ($dayIndex = 0; $dayIndex < $count; $dayIndex++) {
-            $dates[] = $start->copy()->addDay($dayIndex);
+            $dates[] = $this->format($start->copy()->addDay($dayIndex));
         }
 
         return $dates;
+    }
+
+    /**
+     * @param Carbon $day
+     * @return mixed
+     */
+    protected function format($day)
+    {
+        if ($this->formatter === null) {
+            return $day;
+        }
+
+        if (is_callable($this->formatter)) {
+            return call_user_func($this->formatter, $day);
+        }
+
+        if (class_exists($this->formatter)) {
+            return new $this->formatter($day);
+        }
+
+        return $day->format($this->formatter);
     }
 }
